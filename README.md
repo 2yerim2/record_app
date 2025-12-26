@@ -83,8 +83,9 @@ def summarize():
 -UI는 HTML을 이용해서 구현함.
 -녹음 시작,녹음 번역, 3줄 요약 버튼이 각각 있고 이를 누르면 각각의 기능이 순차적으로 실행됨.
 -번역 결과, 요약 결과 칸이 각각 있어서 음성을 텍스트로 변환한 전체 결과를 윗 칸에서 보여주고, gpt를 이용해 이를 3줄 요약한 결과를 밑 칸에서 보여줌.
-<img width="851" height="498" alt="image" src="https://github.com/user-attachments/assets/ca5696cf-bf71-464e-b4ff-07b75e1d17dd" />
-<img width="800" height="653" alt="image" src="https://github.com/user-attachments/assets/4038c36a-f222-45a6-b7ba-92698b02af50" />
+<img width="754" height="504" alt="image" src="https://github.com/user-attachments/assets/87739dea-08d3-4b3d-90c7-91a539d5dc1f" />
+<img width="753" height="630" alt="image" src="https://github.com/user-attachments/assets/1b7d081e-fc67-4fcd-a14c-ffaadc09ef0f" />
+
 
 
 
