@@ -35,7 +35,7 @@
         
         text = transcript.text
         
-        # 파일 삭제
+        # 원본 파일 삭제
         os.remove(filepath)
         
         return jsonify({'text': text})
