@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>강의 녹음 AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        button {
+            padding: 15px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .record-btn {
+            background: #e74c3c;
+        }
+        
+        .record-btn:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+        
+        .record-btn.recording {
+            background: #27ae60;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .transcribe-btn {
+            background: #3498db;
+        }
+        
+        .transcribe-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .transcribe-btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        .summarize-btn {
+            background: #9b59b6;
+        }
+        
+        .summarize-btn:hover {
+            background: #8e44ad;
+            transform: translateY(-2px);
+        }
+        
+        .summarize-btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .status {
+            text-align: center;
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .status.recording {
+            background: #fee;
+            color: #c0392b;
+        }
+        
+        .status.idle {
+            background: #e8f4f8;
+            color: #2980b9;
+        }
+        
+        .result-box {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            min-height: 100px;
+        }
+        
+        .result-box h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .result-text {
+            line-height: 1.8;
+            color: #555;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .summary-text {
+            line-height: 2;
+            color: #555;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎙️ 강의 녹음 AI</h1>
+        
+        <div class="button-group">
+            <button id="recordBtn" class="record-btn">🔴 녹음 시작</button>
+            <button id="transcribeBtn" class="transcribe-btn" disabled>📝 녹음 번역</button>
+            <button id="summarizeBtn" class="summarize-btn" disabled>📋 3줄 요약</button>
+        </div>
+        
+        <div id="status" class="status idle">대기 중...</div>
+        
+        <div class="result-box">
+            <h3>번역 결과</h3>
+            <div id="transcriptResult" class="result-text">번역된 텍스트가 여기에 표시됩니다.</div>
+        </div>
+        
+        <div class="result-box" style="margin-top: 20px;">
+            <h3>요약 결과</h3>
+            <div id="summaryResult" class="summary-text">요약된 내용이 여기에 표시됩니다.</div>
+        </div>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let audioBlob = null;
+        let isRecording = false;
+        
+        const recordBtn = document.getElementById('recordBtn');
+        const transcribeBtn = document.getElementById('transcribeBtn');
+        const summarizeBtn = document.getElementById('summarizeBtn');
+        const status = document.getElementById('status');
+        const transcriptResult = document.getElementById('transcriptResult');
+        const summaryResult = document.getElementById('summaryResult');
+        
+        // 녹음 시작/중지
+        recordBtn.addEventListener('click', async () => {
+            if (!isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    
+                    mediaRecorder.ondataavailable = (event) => {
+                        audioChunks.push(event.data);
+                    };
+                    
+                    mediaRecorder.onstop = () => {
+                        audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        transcribeBtn.disabled = false;
+                        status.textContent = '녹음 완료! 번역 버튼을 눌러주세요.';
+                        status.className = 'status idle';
+                    };
+                    
+                    mediaRecorder.start();
+                    isRecording = true;
+                    recordBtn.textContent = '⏹️ 녹음 중지';
+                    recordBtn.classList.add('recording');
+                    status.textContent = '🔴 녹음 중...';
+                    status.className = 'status recording';
+                    transcribeBtn.disabled = true;
+                    summarizeBtn.disabled = true;
+                    
+                } catch (error) {
+                    alert('마이크 접근 권한이 필요합니다: ' + error.message);
+                }
+            } else {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                isRecording = false;
+                recordBtn.textContent = '🔴 녹음 시작';
+                recordBtn.classList.remove('recording');
+            }
+        });
+        
+        // 번역 버튼
+        transcribeBtn.addEventListener('click', async () => {
+            if (!audioBlob) {
+                alert('먼저 녹음을 해주세요.');
+                return;
+            }
+            
+            transcribeBtn.disabled = true;
+            status.textContent = '번역 중... 잠시만 기다려주세요.';
+            status.className = 'status idle';
+            transcriptResult.textContent = '처리 중...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'recording.webm');
+                
+                const response = await fetch('/transcribe', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    transcriptResult.textContent = data.text;
+                    summarizeBtn.disabled = false;
+                    status.textContent = '번역 완료!';
+                } else {
+                    transcriptResult.textContent = '오류: ' + data.error;
+                    status.textContent = '번역 실패';
+                }
+            } catch (error) {
+                transcriptResult.textContent = '오류: ' + error.message;
+                status.textContent = '번역 실패';
+            }
+            
+            transcribeBtn.disabled = false;
+        });
+        
+        // 요약 버튼
+        summarizeBtn.addEventListener('click', async () => {
+            const text = transcriptResult.textContent;
+            if (!text || text === '번역된 텍스트가 여기에 표시됩니다.' || text.startsWith('처리 중') || text.startsWith('오류')) {
+                alert('먼저 번역을 해주세요.');
+                return;
+            }
+            
+            summarizeBtn.disabled = true;
+            status.textContent = '요약 중... 잠시만 기다려주세요.';
+            summaryResult.textContent = '처리 중...';
+            
+            try {
+                const response = await fetch('/summarize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    summaryResult.textContent = data.summary;
+                    status.textContent = '요약 완료!';
+                } else {
+                    summaryResult.textContent = '오류: ' + data.error;
+                    status.textContent = '요약 실패';
+                }
+            } catch (error) {
+                summaryResult.textContent = '오류: ' + error.message;
+                status.textContent = '요약 실패';
+            }
+            
+            summarizeBtn.disabled = false;
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
