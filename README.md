@@ -31,7 +31,7 @@
             transcript = client.audio.transcriptions.create(
                 model="whisper-1",
                 file=f,
-                language="ko"  # 한국어로 지정
+                language="ko"  # 한국어로 지정함
             )
         
         text = transcript.text
@@ -42,7 +42,7 @@
         return jsonify({'text': text})
     
     except Exception as e:
-        # 에러 발생 시 파일 삭제(변수e에 에러 저장)
+        # 에러 발생 시 파일 삭제함(변수e에 에러 저장)
         if os.path.exists(filepath):
             os.remove(filepath)
         return jsonify({'error': str(e)}), 500
@@ -52,7 +52,6 @@
 ## 3. 3줄 요약 기능
 ```@app.route('/summarize', methods=['POST'])
 def summarize():
-    """텍스트를 3줄로 요약"""
     data = request.get_json()
     text = data.get('text', '')
     
@@ -138,6 +137,7 @@ python app.py
 - 녹음 파일은 서버에 임시로 저장되며, 처리 후 자동으로 삭제됩니다.
 
 >>>>>>> 0f4dcae (First commit)
+
 
 
 
